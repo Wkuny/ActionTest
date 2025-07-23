@@ -1,0 +1,7 @@
+{
+  "email": "你的邮箱，用来登录Outlook和Crowdin",
+  "emailPassword": "Outlook邮箱的密码（可能没用）",
+  "crowdinPassword": "Crowdin的密码",
+  "refreshToken": "刷新令牌。买令牌卡都有的",
+  "clientID": "客户端ID。买令牌卡也有的"
+}
