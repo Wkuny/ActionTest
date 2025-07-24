@@ -95,7 +95,7 @@ public class RetryTaskChain {
             boolean exceptionThrown = false;
             Throwable throwable = null;
             for(int i=1; i<=task.maxAttempts; i++) {
-                System.out.printf("[%s + %.3fs]: %s\n",Thread.currentThread().getName(),(System.currentTimeMillis()-begin)/1e3,task.name);
+                System.out.printf("[%.3fs]: %s\n",(System.currentTimeMillis()-begin)/1e3,task.name);
                 if(i>=2) {
                     System.out.printf("任务%s正在重试第%d次\n", task.name, i);
                     task.beforeRetry();
@@ -217,7 +217,7 @@ public class RetryTaskChain {
          * 执行重试前的操作。
          */
         void beforeRetry() {
-            beforeRetry.run();
+            if(beforeRetry!=null) beforeRetry.run();
         }
     }
 }

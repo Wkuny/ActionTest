@@ -53,7 +53,7 @@ class OutlookMailHandler(val user:String, val clientID:String, val refreshToken:
             if(messages[index].receivedDate.time + 15*60*1000 < System.currentTimeMillis()) continue
             val content = messages[index].content as MimeMultipart
             this.verifyCode = getVerifyCodeFrom(content.getBodyPart(0).content.toString())
-            Main.verifyCode = this.verifyCode
+            MainKt.verifyCode.append(this.verifyCode)
             return
         }
     }
