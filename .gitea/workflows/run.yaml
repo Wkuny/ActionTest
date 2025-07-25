@@ -29,8 +29,10 @@ jobs:
               wget https://packages.mozilla.org/apt/pool/mozilla/firefox_141.0~build2_amd64_c409464a3b7272235eb721b5c4bbe97a.deb -O ${{ runner.temp }}/firefox.deb
             fi
 # 安装Firefox
-        - name: 安装Firefox
-          run: dpkg -i ${{ runner.temp }}/firefox.deb
+        - name: 安装Firefox和依赖
+          run: |
+            apt update && apt install -y libgtk-3-0t64 libasound2t64 libatk1.0-0t64 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxfixes3 libxi6 libxrandr2
+            dpkg -i ${{ runner.temp }}/firefox.deb
 # 缓存JDK
         - name: 缓存JDK
           uses: actions/cache@v4
@@ -57,7 +59,7 @@ jobs:
 # 配置Maven
         - name: 配置Maven
           run: |
-            apt update && apt install -y maven
+            apt install -y maven
             cp .m2/settings.xml $HOME/.m2/settings.xml
 # 构建
         - name: 构建
