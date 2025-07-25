@@ -1,0 +1,80 @@
+name: 运行项目
+on:
+  push:
+    branches:
+      - develop
+      - testAction
+  schedule:
+    - cron: '0 12 * * 1'
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+# 签出分支
+        - name: 签出分支
+          uses: actions/checkout@v4
+
+# 缓存Firefox
+        - name: 缓存Firefox
+          uses: actions/cache@v4
+          with:
+            path: ${{ runner.temp }}/firefox.deb
+            key: ${{ runner.os }}-firefox-${{ hashFiles('firefox.deb') }}
+            restore-keys: |
+              ${{ runner.os }}-firefox-
+# 没有缓存则进行下载
+        - name: 下载Firefox
+          run: |
+            if [ ! -f "$RUNNER_TEMP/firefox.deb" ]; then
+              wget https://packages.mozilla.org/apt/pool/mozilla/firefox_141.0~build2_amd64_c409464a3b7272235eb721b5c4bbe97a.deb -O ${{ runner.temp }}/firefox.deb
+            fi
+# 安装Firefox
+        - name: 安装Firefox
+          run: dpkg -i ${{ runner.temp }}/firefox.deb
+# 缓存JDK
+        - name: 缓存JDK
+          uses: actions/cache@v4
+          with:
+            path: ${{ runner.temp }}/java_package.tar.gz
+            key: ${{ runner.os }}-jdk-21-${{ hashFiles('java_package.tar.gz') }}
+            restore-keys: |
+              ${{ runner.os }}-jdk-21-
+# 没有缓存则进行下载
+        - name: 没有缓存则进行下载
+          run: |
+            if [ ! -f "$RUNNER_TEMP/java_package.tar.gz" ]; then
+              download_url="https://download.java.net/openjdk/jdk21/ri/openjdk-21+35_linux-x64_bin.tar.gz"
+              wget -O $RUNNER_TEMP/java_package.tar.gz $download_url
+            fi
+# 配置JDK 21
+        - name: Setup java
+          uses: actions/setup-java@v4
+          with:
+            distribution: 'jdkfile'
+            jdkfile: ${{ runner.temp }}/java_package.tar.gz
+            java-version: '21'
+            cache: 'maven'
+# 配置Maven
+        - name: 配置Maven
+          run: |
+            apt update && apt install -y maven
+            cp .m2/settings.xml $HOME/.m2/settings.xml
+# 构建
+        - name: 构建
+          run: mvn clean package
+# 复制jar到run目录
+        - name: 复制jar到run目录
+          run: |
+            mkdir run
+            cp *-with-dependencies.jar run/build.jar
+# 运行jar
+        - name: 运行jar
+          run: |
+            cd run
+            java -jar build.jar
+# 上传工件
+        - name: 上传工件
+          uses: actions/upload-artifact@v3
+          with:
+            name: result
+            path: run/result.csv
