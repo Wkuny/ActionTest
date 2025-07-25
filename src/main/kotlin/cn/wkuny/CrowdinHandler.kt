@@ -56,7 +56,7 @@ class CrowdinHandler(private val email:String, private val crowdinPassword:Strin
         for (page in 1..pageBound){
             wait.until(ExpectedConditions.textToBe(By.cssSelector("button.phrases-displayed"), "$page / $pageBound"))
             println("== Page $page / $pageBound ==")
-            val elements = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.cssSelector("ul#texts_list.texts-to-translate-list div.proofread-string-wrapper")))
+            val elements = driver.findElements(By.cssSelector("ul#texts_list.texts-to-translate-list div.proofread-string-wrapper"))
             for (element in elements){
                 var approved:Boolean
                 try{
