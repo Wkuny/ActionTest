@@ -61,6 +61,13 @@ jobs:
           run: |
             apt install -y maven
             cp .m2/settings.xml $HOME/.m2/settings.xml
+# 创建account.json
+# 你应当将account.json文件内容保存在名为`ACCOUNT`的secrets中
+# account.json中应当指定的内容已在template中指出
+        - name: 创建account.json
+          env:
+            ACCOUNT: ${{ secrets.ACCOUNT }}
+          run: echo "${ACCOUNT}" > src/main/resources/account.json
 # 构建
         - name: 构建
           run: mvn clean package
