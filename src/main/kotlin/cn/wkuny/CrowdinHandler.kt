@@ -11,13 +11,21 @@ import java.io.BufferedWriter
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
-class CrowdinHandler(private val email:String, private val crowdinPassword:String){
-    private val driver = FirefoxDriver(FirefoxOptions().addArguments("--headless"))
+class CrowdinHandler(){
     private val url = "https://zh.crowdin.com/editor/hypixel/499/en-zhcn"
-    private val wait = WebDriverWait(driver, Duration.ofSeconds(30))
-    private val detector = WebDriverWait(driver, Duration.ofMillis(200))
-    init{
+
+    private lateinit var email:String
+    private lateinit var crowdinPassword:String
+    private lateinit var driver: FirefoxDriver
+    private lateinit var wait: WebDriverWait
+    private lateinit var detector: WebDriverWait
+    fun initialize(){
+        driver = FirefoxDriver(FirefoxOptions().addArguments("--headless"))
         driver.get(url)
+        email = MainKt.getAccountInfo().email
+        crowdinPassword = MainKt.getAccountInfo().crowdinPassword
+        wait = WebDriverWait(driver, Duration.ofSeconds(30))
+        detector = WebDriverWait(driver, Duration.ofMillis(200))
     }
     fun login(){
         wait.until(ExpectedConditions.urlContains("accounts.crowdin.com/login"))

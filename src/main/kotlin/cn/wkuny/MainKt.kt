@@ -20,9 +20,10 @@ object MainKt {
     @JvmStatic
     fun main(args: Array<String>) {
         val outlookHandler = OutlookMailHandler(accountInfo.email, accountInfo.clientID, accountInfo.refreshToken)
-        val crowdinHandler = CrowdinHandler(accountInfo.email, accountInfo.crowdinPassword)
+        val crowdinHandler = CrowdinHandler()
 
         val crowdinTaskChain = RetryTaskChain()
+            .step(crowdinHandler::initialize,"初始化",3)
             .step(crowdinHandler::login,"登录Crowdin",1)
             .step(outlookHandler::getAccessToken, "获取AccessToken",3)
             .step(outlookHandler::interactWithOutlook,"IMAP登录Outlook",3)
@@ -37,4 +38,6 @@ object MainKt {
     fun finalize(){
         writer.close();
     }
+
+    fun getAccountInfo(): AccountInfo = accountInfo;
 }
