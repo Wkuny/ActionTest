@@ -68,7 +68,7 @@ jobs:
         - name: 复制jar到run目录
           run: |
             mkdir run
-            cp *-with-dependencies.jar run/build.jar
+            cp target/*-with-dependencies.jar run/build.jar
 # 运行jar
         - name: 运行jar
           run: |
