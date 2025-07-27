@@ -6,6 +6,7 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.util.*
+import java.util.concurrent.TimeUnit
 import javax.mail.Folder
 import javax.mail.Message
 import javax.mail.Session
@@ -46,6 +47,7 @@ class OutlookMailHandler(val user:String, val clientID:String, val refreshToken:
         return folder.messages
     }
     fun findVerifyCode(){
+        if(System.currentTimeMillis()-MainKt.loginBeginTime < 10_000) TimeUnit.SECONDS.sleep(5)
         val messages = getInbox()
         for(index in messages.size-1 downTo 0){
             val from = messages[index].from[0] as InternetAddress

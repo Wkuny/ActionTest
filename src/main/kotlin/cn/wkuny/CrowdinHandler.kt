@@ -35,6 +35,8 @@ class CrowdinHandler(){
         userNameField.sendKeys(email)
         passwordField.sendKeys(crowdinPassword)
         loginButton.click()
+        MainKt.loginBeginTime = System.currentTimeMillis()
+
     }
     fun verifyCode(){
         wait.until(ExpectedConditions.urlContains("accounts.crowdin.com/device-verify"))

@@ -9,6 +9,8 @@ import java.nio.charset.StandardCharsets
 object MainKt {
     private val gson = Gson()
     private val accountInfo: AccountInfo
+    @Volatile var loginBeginTime = -114514L
+
 
     private val output = File("result.csv");
     val writer = FileUtil.getWriter(output, StandardCharsets.UTF_8, false);
@@ -32,7 +34,8 @@ object MainKt {
             .step(crowdinHandler::rememberMe,"操作记住我页面",1)
             .step(crowdinHandler::getTranslation,"获取翻译",1)
             .step(::finalize, "结束",1)
-        Thread(crowdinTaskChain::run,"Crowdin").start()
+        val retryTaskFailedException = crowdinTaskChain.run()
+        if(retryTaskFailedException!=null) throw retryTaskFailedException
     }
     @JvmStatic
     fun finalize(){

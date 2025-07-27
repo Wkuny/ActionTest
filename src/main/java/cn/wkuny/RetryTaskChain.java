@@ -89,6 +89,7 @@ public class RetryTaskChain {
      *
      * @return 如果所有任务成功执行，返回 null；否则返回最后一次失败的异常信息
      */
+    @org.jetbrains.annotations.Nullable
     public RetryTaskFailedException run(){
         long begin = System.currentTimeMillis();
         for (TaskWrapper task : tasks) {
