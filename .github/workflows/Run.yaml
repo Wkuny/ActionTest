@@ -3,6 +3,7 @@ on:
   fork:
   push:
     branches:
+      - github-actions-test
       - develop
   schedule:
     - cron: '0 12 * * 1'
@@ -33,27 +34,26 @@ jobs:
           run: |
             apt update && apt install -y libgtk-3-0t64 libasound2t64 libatk1.0-0t64 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxfixes3 libxi6 libxrandr2
             dpkg -i ${{ runner.temp }}/firefox.deb
-# 缓存JDK
-        - name: 🍵 缓存JDK
-          uses: actions/cache@v4
-          with:
-            path: ${{ runner.temp }}/java_package.tar.gz
-            key: ${{ runner.os }}-jdk-21-${{ hashFiles('java_package.tar.gz') }}
-            restore-keys: |
-              ${{ runner.os }}-jdk-21-
-# 没有缓存则进行下载
-        - name: 📥 没有缓存则进行下载
-          run: |
-            if [ ! -f "$RUNNER_TEMP/java_package.tar.gz" ]; then
-              download_url="https://download.java.net/openjdk/jdk21/ri/openjdk-21+35_linux-x64_bin.tar.gz"
-              wget -O $RUNNER_TEMP/java_package.tar.gz $download_url
-            fi
+## 缓存JDK
+#        - name: 🍵 缓存JDK
+#          uses: actions/cache@v4
+#          with:
+#            path: ${{ runner.temp }}/java_package.tar.gz
+#            key: ${{ runner.os }}-jdk-21-${{ hashFiles('java_package.tar.gz') }}
+#            restore-keys: |
+#              ${{ runner.os }}-jdk-21-
+## 没有缓存则进行下载
+#        - name: 📥 没有缓存则进行下载
+#          run: |
+#            if [ ! -f "$RUNNER_TEMP/java_package.tar.gz" ]; then
+#              download_url="https://download.java.net/openjdk/jdk21/ri/openjdk-21+35_linux-x64_bin.tar.gz"
+#              wget -O $RUNNER_TEMP/java_package.tar.gz $download_url
+#            fi
 # 配置JDK 21
         - name: ⚙️ 配置JDK
           uses: actions/setup-java@v4
           with:
-            distribution: 'jdkfile'
-            jdkfile: ${{ runner.temp }}/java_package.tar.gz
+            distribution: 'temurin'
             java-version: '21'
             cache: 'maven'
 # 配置Maven
