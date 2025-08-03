@@ -58,6 +58,28 @@ public class RetryTaskChain {
     public RetryTaskChain step(Runnable task, int maxAttempts) {
         return step(task, "Step " + (tasks.size()+1), maxAttempts, null);
     }
+    public static void run(Runnable task, int maxAttempts, Runnable beforeRetry,Predicate<Throwable>... throwPredicates) {
+        boolean exceptionThrown = false;
+        Throwable throwable = null;
+        for(int i=1; i<=maxAttempts; i++) {
+            if(i>=2) {
+                System.out.printf("任务%s正在重试第%d次\n", "", i);
+                if(beforeRetry!=null) beforeRetry.run();
+                exceptionThrown = false;
+            }
+            try{
+                task.run();
+            } catch (RuntimeException | Error e) {
+                if(shouldThrow(e, throwPredicates))
+                    throw new RetryTaskFailedException("", i, e);
+                e.printStackTrace(System.err);
+                exceptionThrown = true;
+                throwable = e;
+            }
+            if(!exceptionThrown) break;
+        }
+        if(exceptionThrown) throw new RetryTaskFailedException("", maxAttempts, throwable);
+    }
 
     /**
      * 添加一个可重试的任务，无重试操作。
@@ -89,6 +111,7 @@ public class RetryTaskChain {
      *
      * @return 如果所有任务成功执行，返回 null；否则返回最后一次失败的异常信息
      */
+    @org.jetbrains.annotations.Nullable
     public RetryTaskFailedException run(){
         long begin = System.currentTimeMillis();
         for (TaskWrapper task : tasks) {
@@ -124,6 +147,12 @@ public class RetryTaskChain {
      * @return 如果应立即停止重试返回 true，否则返回 false
      */
     private boolean shouldThrow(Throwable throwable) {
+        for(Predicate<Throwable> predicate : throwPredicates) {
+            if(predicate.test(throwable)) return true;
+        }
+        return false;
+    }
+    private static boolean shouldThrow(Throwable throwable, Predicate<Throwable>[] throwPredicates) {
         for(Predicate<Throwable> predicate : throwPredicates) {
             if(predicate.test(throwable)) return true;
         }
@@ -220,4 +249,6 @@ public class RetryTaskChain {
             if(beforeRetry!=null) beforeRetry.run();
         }
     }
+
+
 }

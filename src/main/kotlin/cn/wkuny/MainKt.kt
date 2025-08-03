@@ -1,18 +1,16 @@
 package cn.wkuny
 
-import cn.hutool.core.io.FileUtil
 import com.google.gson.Gson
 import org.apache.commons.io.IOUtils
-import java.io.File
 import java.nio.charset.StandardCharsets
 
 object MainKt {
     private val gson = Gson()
-    private val accountInfo: AccountInfo
+    @Volatile var loginBeginTime = -114514L
 
-    private val output = File("result.csv");
-    val writer = FileUtil.getWriter(output, StandardCharsets.UTF_8, false);
+
     val verifyCode = StringBuffer()
+    val accountInfo: AccountInfo
     init{
         val accountJson = IOUtils.toString(MainKt::class.java.getResourceAsStream("/account.json"),StandardCharsets.UTF_8)
         accountInfo = gson.fromJson(accountJson, AccountInfo::class.java)
@@ -32,12 +30,11 @@ object MainKt {
             .step(crowdinHandler::rememberMe,"操作记住我页面",1)
             .step(crowdinHandler::getTranslation,"获取翻译",1)
             .step(::finalize, "结束",1)
-        Thread(crowdinTaskChain::run,"Crowdin").start()
+        val retryTaskFailedException = crowdinTaskChain.run()
+        if(retryTaskFailedException!=null) throw retryTaskFailedException
     }
     @JvmStatic
     fun finalize(){
-        writer.close();
-    }
 
-    fun getAccountInfo(): AccountInfo = accountInfo;
+    }
 }

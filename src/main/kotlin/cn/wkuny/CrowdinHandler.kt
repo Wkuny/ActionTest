@@ -1,5 +1,6 @@
 package cn.wkuny
 
+import cn.hutool.core.io.FileUtil
 import org.openqa.selenium.By
 import org.openqa.selenium.Keys
 import org.openqa.selenium.NoSuchElementException
@@ -8,11 +9,13 @@ import org.openqa.selenium.firefox.FirefoxOptions
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import java.io.BufferedWriter
+import java.io.File
+import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 class CrowdinHandler(){
-    private val url = "https://zh.crowdin.com/editor/hypixel/499/en-zhcn"
+    private val url = "https://zh.crowdin.com/editor/hypixel/499/en-"
 
     private lateinit var email:String
     private lateinit var crowdinPassword:String
@@ -21,9 +24,9 @@ class CrowdinHandler(){
     private lateinit var detector: WebDriverWait
     fun initialize(){
         driver = FirefoxDriver(FirefoxOptions().addArguments("--headless"))
-        driver.get(url)
-        email = MainKt.getAccountInfo().email
-        crowdinPassword = MainKt.getAccountInfo().crowdinPassword
+        driver.get("https://zh.crowdin.com/editor/hypixel/499/en-zhcn")
+        email = MainKt.accountInfo.email
+        crowdinPassword = MainKt.accountInfo.crowdinPassword
         wait = WebDriverWait(driver, Duration.ofSeconds(30))
         detector = WebDriverWait(driver, Duration.ofMillis(200))
     }
@@ -35,6 +38,8 @@ class CrowdinHandler(){
         userNameField.sendKeys(email)
         passwordField.sendKeys(crowdinPassword)
         loginButton.click()
+        MainKt.loginBeginTime = System.currentTimeMillis()
+
     }
     fun verifyCode(){
         wait.until(ExpectedConditions.urlContains("accounts.crowdin.com/device-verify"))
@@ -52,9 +57,15 @@ class CrowdinHandler(){
         wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("button#remember-me"))).click()
     }
     fun getTranslation(){
-        val writer:BufferedWriter = MainKt.writer
+        for(lang in MainKt.accountInfo.langList){
+            driver.get(url + lang)
+            getTranslationOf(lang)
+        }
+    }
+    fun getTranslationOf(lang:String){
+        val writer:BufferedWriter = FileUtil.getWriter(File("result-${lang}.csv"), StandardCharsets.UTF_8, false)
         writer.appendLine("批准状态,源字符串,翻译字符串")
-        wait.until(ExpectedConditions.urlContains("zh.crowdin.com/editor/hypixel/499/en-zhcn"))
+        wait.until(ExpectedConditions.urlContains("zh.crowdin.com/editor/hypixel/499/en-${lang}"))
         // button.phrases-displayed -> 页码 "page / bound"
         wait.until(ExpectedConditions.textMatches(By.cssSelector("button.phrases-displayed"), "\\d+ / \\d+".toPattern()))
         val pageTag = driver.findElement(By.cssSelector("button.phrases-displayed"))
@@ -63,7 +74,7 @@ class CrowdinHandler(){
         val pageBound = pageTag.text.split(" / ")[1].toInt()
         for (page in 1..pageBound){
             wait.until(ExpectedConditions.textToBe(By.cssSelector("button.phrases-displayed"), "$page / $pageBound"))
-            println("== Page $page / $pageBound ==")
+            println("== Page(${lang}) $page / $pageBound ==")
             val elements = driver.findElements(By.cssSelector("ul#texts_list.texts-to-translate-list div.proofread-string-wrapper"))
             for (element in elements){
                 var approved:Boolean
@@ -73,10 +84,12 @@ class CrowdinHandler(){
                 }catch (e:NoSuchElementException){
                     approved = false
                 }
-                val source = element.findElement(By.cssSelector("div.phrase-left div.singular.selectable")).text
-                val translation = element.findElement(By.cssSelector("div.phrase-right textarea")).text
-                writer.appendLine("${if(approved) "T" else "F"},${source},${translation}")
-                println("${if(approved) "T" else "F"} ${source} ${translation}")
+                RetryTaskChain.run({
+                    val source = element.findElement(By.cssSelector("div.phrase-left div.singular.selectable")).text
+                    val translation = element.findElement(By.cssSelector("div.phrase-right textarea")).text
+                    writer.appendLine("${if(approved) "T" else "F"},${source},${translation}")
+//                    println("${if(approved) "T" else "F"} ${source} ${translation}")
+                }, 3, null)
             }
             if(page < pageBound){
                 val nextPage =
@@ -86,5 +99,6 @@ class CrowdinHandler(){
             }
             writer.flush()
         }
+        writer.close();
     }
 }

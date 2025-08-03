@@ -3,8 +3,8 @@ on:
   fork:
   push:
     branches:
-      - github-actions-test
       - develop
+      - feature-multi-lang
   schedule:
     - cron: '0 12 * * 1'
 jobs:
@@ -86,4 +86,4 @@ jobs:
           uses: actions/upload-artifact@v4
           with:
             name: result
-            path: run/result.csv
+            path: run/*.csv
